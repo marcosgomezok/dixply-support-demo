@@ -1,0 +1,15 @@
+---
+import ConversoApp from "../../components/ConversoApp";
+import SiteShell from "../../components/SiteShell.astro";
+import type { Locale } from "../../lib/types";
+
+export function getStaticPaths() {
+  return [{ params: { lang: "en" } }, { params: { lang: "es" } }];
+}
+
+const lang = Astro.params.lang as Locale;
+---
+
+<SiteShell lang={lang}>
+  <ConversoApp client:load locale={lang} />
+</SiteShell>

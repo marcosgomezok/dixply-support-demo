@@ -1,0 +1,43 @@
+---
+import "../styles/global.css";
+import { dictionaries } from "../i18n/dictionaries";
+import type { Locale } from "../lib/types";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const copy = dictionaries[lang];
+const canonical = new URL(`/${lang}/`, Astro.site);
+const ogLocale = lang === "es" ? "es_ES" : "en_US";
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, follow" />
+    <meta name="googlebot" content="noindex, follow" />
+    <meta name="description" content={copy.meta.description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={new URL("/en/", Astro.site)} />
+    <link rel="alternate" hreflang="es" href={new URL("/es/", Astro.site)} />
+    <link rel="alternate" hreflang="x-default" href={new URL("/en/", Astro.site)} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale:alternate" content={lang === "en" ? "es_ES" : "en_US"} />
+    <meta property="og:title" content={copy.meta.title} />
+    <meta property="og:description" content={copy.meta.description} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={copy.meta.title} />
+    <meta name="twitter:description" content={copy.meta.description} />
+    <title>{copy.meta.title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

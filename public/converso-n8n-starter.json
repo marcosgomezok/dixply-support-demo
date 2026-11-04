@@ -1,0 +1,328 @@
+{
+  "name": "Converso WhatsApp Support Starter",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "converso-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a001",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "converso-demo-webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body?.message ?? $json.body?.text ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "sender",
+              "name": "sender",
+              "value": "={{ $json.body?.from ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a002",
+      "name": "Normalize Incoming Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "invoice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "factura",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "Invoice request"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "ayuda",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "General support"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a003",
+      "name": "Intent Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "invoice-reply",
+              "name": "reply",
+              "value": "Invoice request received. Configure a document-generation step and customer-approved delivery before production use.",
+              "type": "string"
+            },
+            {
+              "id": "invoice-intent",
+              "name": "intent",
+              "value": "invoice",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a004",
+      "name": "Prepare Invoice Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 180]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "general-reply",
+              "name": "reply",
+              "value": "Thanks for your message. Connect a configured support knowledge source to provide a business-specific answer.",
+              "type": "string"
+            },
+            {
+              "id": "general-intent",
+              "name": "intent",
+              "value": "general",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a005",
+      "name": "Prepare General Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fallback-reply",
+              "name": "reply",
+              "value": "Message received. Configure intent rules and a support response before production use.",
+              "type": "string"
+            },
+            {
+              "id": "fallback-intent",
+              "name": "intent",
+              "value": "unclassified",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a006",
+      "name": "Prepare Fallback Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, intent: $json.intent, reply: $json.reply } }}",
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a007",
+      "name": "Return Invoice Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1190, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, intent: $json.intent, reply: $json.reply } }}",
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a008",
+      "name": "Return General Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1190, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, intent: $json.intent, reply: $json.reply } }}",
+        "options": {}
+      },
+      "id": "0d4fdb46-b42d-4c45-a089-8a13f7a7a009",
+      "name": "Return Fallback Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1190, 420]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Incoming Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Incoming Message": {
+      "main": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router": {
+      "main": [
+        [
+          {
+            "node": "Prepare Invoice Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare General Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Fallback Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Invoice Response": {
+      "main": [
+        [
+          {
+            "node": "Return Invoice Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare General Response": {
+      "main": [
+        [
+          {
+            "node": "Return General Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Fallback Response": {
+      "main": [
+        [
+          {
+            "node": "Return Fallback Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3e1ec83e-2af0-46ef-a632-6945b205a403",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
